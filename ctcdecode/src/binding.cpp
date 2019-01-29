@@ -35,7 +35,8 @@ int beam_decode(THFloatTensor *th_probs,
                 THIntTensor *th_output,
                 THIntTensor *th_timesteps,
                 THFloatTensor *th_scores,
-                THIntTensor *th_out_length)
+                THIntTensor *th_out_length,
+         		THFloatTensor *th_char_probs)
 {
     std::vector<std::string> new_vocab;
     utf8_to_utf8_char_vec(labels, new_vocab);
@@ -71,9 +72,11 @@ int beam_decode(THFloatTensor *th_probs,
             Output output = n_path_result.second;
             std::vector<int> output_tokens = output.tokens;
             std::vector<int> output_timesteps = output.timesteps;
+	        std::vector<float> output_char_probs = output.char_probs;
             for (int t = 0; t < output_tokens.size(); ++t){
                 THIntTensor_set3d(th_output, b, p, t, output_tokens[t]); // fill output tokens
                 THIntTensor_set3d(th_timesteps, b, p, t, output_timesteps[t]); // fill timesteps tokens
+                THFloatTensor_set3d(th_char_probs, b, p, t, output_char_probs[t]); // fill char prob tensor
             }
             THFloatTensor_set2d(th_scores, b, p, n_path_result.first); // fill path scores
             THIntTensor_set2d(th_out_length, b, p, output_tokens.size());
@@ -98,10 +101,12 @@ extern "C"
                                THIntTensor *th_output,
                                THIntTensor *th_timesteps,
                                THFloatTensor *th_scores,
-                               THIntTensor *th_out_length){
+                               THIntTensor *th_out_length,
+			                   THFloatTensor *th_char_probs){
 
             return beam_decode(th_probs, th_seq_lens, labels, vocab_size, beam_size, num_processes,
-                        cutoff_prob, cutoff_top_n, blank_id,NULL, th_output, th_timesteps, th_scores, th_out_length);
+                        cutoff_prob, cutoff_top_n, blank_id,NULL, th_output, th_timesteps, th_scores, th_out_length,
+			            th_char_probs);
         }
 
         int paddle_beam_decode_lm(THFloatTensor *th_probs,
@@ -117,10 +122,12 @@ extern "C"
                                   THIntTensor *th_output,
                                   THIntTensor *th_timesteps,
                                   THFloatTensor *th_scores,
-                                  THIntTensor *th_out_length){
+                                  THIntTensor *th_out_length,
+				                  THFloatTensor *th_char_probs){
 
             return beam_decode(th_probs, th_seq_lens, labels, vocab_size, beam_size, num_processes,
-                        cutoff_prob, cutoff_top_n, blank_id,scorer, th_output, th_timesteps, th_scores, th_out_length);
+                        cutoff_prob, cutoff_top_n, blank_id,scorer, th_output, th_timesteps, th_scores, th_out_length,
+			            th_char_probs);
         }
 
 

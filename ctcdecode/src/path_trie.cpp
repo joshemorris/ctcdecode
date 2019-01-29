@@ -35,11 +35,13 @@ PathTrie::~PathTrie() {
   }
 }
 
-PathTrie* PathTrie::get_path_trie(int new_char, int new_timestep, float cur_log_prob_c, bool reset) {
+PathTrie* PathTrie::get_path_trie(int new_char, int new_timestep, float cur_log_prob_c, float prob_blank, bool reset) {
   auto child = children_.begin();
   for (child = children_.begin(); child != children_.end(); ++child) {
     if (child->first == new_char) {
+      cur_log_prob_c += log(1 - prob_blank);
       if (child->second->log_prob_c < cur_log_prob_c) {
+	// update char probability and frame offset
 	child->second->log_prob_c = cur_log_prob_c;
 	child->second->timestep = new_timestep;
       }
@@ -106,22 +108,27 @@ PathTrie* PathTrie::get_path_trie(int new_char, int new_timestep, float cur_log_
   }
 }
 
-PathTrie* PathTrie::get_path_vec(std::vector<int>& output, std::vector<int>& timesteps) {
-  return get_path_vec(output, timesteps, ROOT_);
+PathTrie* PathTrie::get_path_vec(std::vector<int>& output,
+	                  	 std::vector<int>& timesteps,
+				 std::vector<float>& char_probs) {
+  return get_path_vec(output, timesteps, char_probs, ROOT_);
 }
 
 PathTrie* PathTrie::get_path_vec(std::vector<int>& output,
                                  std::vector<int>& timesteps,
+				 std::vector<float>& char_probs,
                                  int stop,
                                  size_t max_steps) {
   if (character == stop || character == ROOT_ || output.size() == max_steps) {
     std::reverse(output.begin(), output.end());
     std::reverse(timesteps.begin(), timesteps.end());
+    std::reverse(char_probs.begin(), char_probs.end());
     return this;
   } else {
     output.push_back(character);
     timesteps.push_back(timestep);
-    return parent->get_path_vec(output, timesteps, stop, max_steps);
+    char_probs.push_back(log_prob_c);
+    return parent->get_path_vec(output, timesteps, char_probs, stop, max_steps);
   }
 }
 

@@ -95,7 +95,7 @@ std::vector<std::pair<double, Output>> ctc_beam_search_decoder(
               prefix->log_prob_nb_cur, log_prob_c + prefix->log_prob_nb_prev);
         }
         // get new prefix
-        auto prefix_new = prefix->get_path_trie(c, time_step, log_prob_c);
+        auto prefix_new = prefix->get_path_trie(c, time_step, log_prob_c, prob[blank_id]);
 
         if (prefix_new != nullptr) {
           float log_p = -NUM_FLT_INF;
@@ -172,7 +172,8 @@ std::vector<std::pair<double, Output>> ctc_beam_search_decoder(
     if (ext_scorer != nullptr) {
       std::vector<int> output;
       std::vector<int> timesteps;
-      prefixes[i]->get_path_vec(output, timesteps);
+      std::vector<float> char_probs;
+      prefixes[i]->get_path_vec(output, timesteps, char_probs);
       auto prefix_length = output.size();
       auto words = ext_scorer->split_labels(output);
       // remove word insert

@@ -6,6 +6,7 @@
  */
 struct Output {
     std::vector<int> tokens, timesteps;
+    std::vector<float> char_probs;
 };
 
 #endif  // OUTPUT_H_
